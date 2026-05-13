@@ -1,0 +1,128 @@
+html, body {
+    height: fit-content;
+}
+
+.container {
+    width: 330px;
+    color: #314d3e;
+}
+
+.title {
+    display: flex;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 5px;
+    margin-left: 3px;
+}
+
+.textbox {
+    width: 100%;
+    font-size: 12px;
+    margin: 0;
+    padding: 0px 2px;
+}
+
+.textbox:focus {
+    outline: 0;
+    border-color: #66afe9;
+}
+
+.controls-table, .data-table {
+    margin: 0px 5px;
+    padding: 3px;
+}
+
+.controls-row {
+    display: flex;
+    border-bottom-color: #5e00d3;
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-radius: 0.8rem;
+    padding: 3px;
+    padding-bottom: 7px;
+    margin-bottom: 7px;
+}
+
+.label, .label-controls {
+    font-weight: bold;
+    margin: 2px 0px 2px 0px;
+}
+
+.button-description-row {
+    display: flex;
+}
+
+.button-description {
+    display: flex;
+    padding-bottom: 7px;
+    margin: 7px 3px;
+}
+
+.description {
+    flex: auto;
+    padding-left: 2px;
+    padding-top: 2px;
+}
+
+.label-controls img, .front-row-controls img, .back-row-controls img, .attribute-controls img {
+    margin: 0 4px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.label-controls img {
+    margin: 0 4px;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+}
+
+.label-controls {
+    display: flex;
+}
+
+.back-row-controls {
+    text-align: right;
+}
+
+.attribute-controls {
+    margin-left: auto;
+}
+
+input[type=text], input[type=number], select {
+    width: 100%;
+    padding: 5px 8px;
+    margin: 2px 0 0 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 12px;
+    background: white;
+}
+
+#allow_move > div > div {
+    display: inline-block;
+}
+
+input[type=checkbox] {
+    display: inline-block;
+    position:relative;
+    top: 3px;
+    width: 15px;
+    height: 15px;
+    margin: 0px 0px 0px 8px;
+}
+
+input[type=text]:focus, input[type=number]:focus, select:focus {
+    outline: none;
+    border-color: #5e00d3;
+    box-shadow:0 0 2px #5e00d3;
+}
+
+input:invalid, select:invalid {
+    outline: none;
+    border-color: #ff1a5f;
+    box-shadow:0 0 2px #ff1a5f;
+}

@@ -1,0 +1,79 @@
+{
+  "manifest_version": 3,
+  "name": "Yuugen Battler",
+  "version": "0.1.0",
+  "description": "Auto-battles in Yugen Saga",
+  "permissions": ["storage", "tabs"],
+  "host_permissions": ["*://127.0.0.1:*/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://127.0.0.1:*/*"],
+      "js": ["contentScript.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/add.png",
+        "assets/attribute.png",
+        "assets/delete.png",
+        "assets/edit.png",
+        "assets/pause.png",
+        "assets/play.png",
+        "assets/return.png",
+        "assets/save.png",
+        "battler.js"
+      ],
+      "matches": ["*://127.0.0.1:*/*"]
+    }
+  ],
+  "action": {
+    "default_icon": {
+      "16": "assets/ext-icon.png",
+      "24": "assets/ext-icon.png",
+      "32": "assets/ext-icon.png"
+    },
+    "default_title": "Yuugen Battler",
+    "default_popup": "popup.html"
+  },
+  "commands": {
+    "play-all": {
+      "description": "Play all battlers."
+    },
+    "pause-all": {
+      "description": "Pause all battlers."
+    },
+    "toggle-1": {
+      "description": "Toggle the 1st battler."
+    },
+    "toggle-2": {
+      "description": "Toggle the 2nd battler."
+    },
+    "toggle-3": {
+      "description": "Toggle the 3rd battler."
+    },
+    "toggle-4": {
+      "description": "Toggle the 4th battler."
+    },
+    "toggle-5": {
+      "description": "Toggle the 5th battler."
+    },
+    "toggle-6": {
+      "description": "Toggle the 6th battler."
+    },
+    "toggle-7": {
+      "description": "Toggle the 7th battler."
+    },
+    "toggle-8": {
+      "description": "Toggle the 8th battler."
+    },
+    "toggle-9": {
+      "description": "Toggle the 9th battler."
+    }
+  }
+}
