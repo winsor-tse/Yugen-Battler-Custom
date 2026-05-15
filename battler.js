@@ -38,77 +38,185 @@ const logWorldStateForAI = () => {
     //console.log("World State for AI:", JSON.stringify(worldState, null, 2));
 };
 
-//New
-const sendWorldStateToAI = async () => {
+// AI WebSocket bridge client.
+// This file runs in the PAGE context, so DO NOT use chrome.runtime here.
+
+const PAGE_SOURCE = "AI_BATTLER_PAGE";
+const EXTENSION_SOURCE = "AI_BATTLER_EXTENSION";
+
+const AI_LOOP_DELAY_MS = 500;
+const AI_REQUEST_TIMEOUT_MS = 5000;
+
+let aiLoopRunning = false;
+let aiLoopStarted = false;
+
+const pendingAiRequests = new Map();
+
+function createRequestId() {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return window.crypto.randomUUID();
+    }
+
+    return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function buildWorldState() {
     const player = getPlayer();
-    const rawEntities = getRegistry().entities;
+    const rawEntities = getRegistry().entities || {};
     const entities = Object.values(rawEntities);
 
-    const worldState = {
+    return {
         timestamp: Date.now(),
+
         player: {
             id: player.id,
+            name: player.name,
             mapX: player.mapX,
             mapY: player.mapY,
             direction: player.direction,
             hp: player.hp,
             maxHp: player.maxHp,
             mp: player.mp,
-            maxMp: player.maxMp,
+            maxMp: player.maxMp
         },
-        entities: entities.map(e => ({
-            id: e.id,
-            mapX: e.mapX,
-            mapY: e.mapY,
-            type: e.type,
-            isCurrentPlayer: e.isCurrentPlayer,
-            mapX: e.mapX,
-            mapY: e.mapY,
-            hp: e.hp,
-            maxHp: e.maxHp,
-            mp: e.mp,
-            maxMp: e.maxMp,
-            distance: getDistance(e.mapX, e.mapY)
+
+        entities: entities.map(entity => ({
+            id: entity.id,
+            name: entity.name,
+            type: entity.type,
+            isCurrentPlayer: entity.isCurrentPlayer,
+            mapX: entity.mapX,
+            mapY: entity.mapY,
+            hp: entity.hp,
+            maxHp: entity.maxHp,
+            mp: entity.mp,
+            maxMp: entity.maxMp,
+            distance: getDistance(entity.mapX, entity.mapY)
         }))
     };
+}
 
-    try {
-        const obsRes = await fetch("http://127.0.0.1:6060/observation", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(worldState)
-        });
+window.addEventListener("message", event => {
+    if (event.source !== window) return;
 
-        const obsResult = await obsRes.json();
-        console.log("Observation sent:", obsResult);
+    const message = event.data;
 
-        const actionRes = await fetch("http://127.0.0.1:6060/last-action", {
-            method: "GET"
-        });
+    if (!message || typeof message !== "object") return;
+    if (message.source !== EXTENSION_SOURCE) return;
 
-        const actionData = await actionRes.json();
-        console.log("Received action:", actionData);
+    const requestId = message.requestId;
 
-        if (actionData.move) {
-            movePlayerDirection(actionData.move);
-        }
-
-        const resetRes = await fetch("http://127.0.0.1:6060/reset", {
-            method: "GET"
-        });
-
-        //TP to certain place in the
-        const resetData = await resetRes.json();  // <-- Fixed typo
-        if (resetData) {
-            getNetwork().playerHp(-1);
-        }
-
-    } catch (err) {
-        console.error("AI server error:", err);
+    if (!requestId || !pendingAiRequests.has(requestId)) {
+        console.warn("[AI Battler] Unmatched extension response:", message);
+        return;
     }
+
+    const pending = pendingAiRequests.get(requestId);
+    clearTimeout(pending.timeoutId);
+    pendingAiRequests.delete(requestId);
+
+    if (message.type === "AI_ERROR") {
+        pending.reject(new Error(message.error || "Unknown AI error"));
+        return;
+    }
+
+    if (message.type === "AI_RESULT") {
+        pending.resolve(message.result);
+    }
+});
+
+function sendAiTick(worldState) {
+    return new Promise((resolve, reject) => {
+        const requestId = createRequestId();
+
+        const timeoutId = setTimeout(() => {
+            pendingAiRequests.delete(requestId);
+            reject(new Error(`AI request timed out after ${AI_REQUEST_TIMEOUT_MS}ms`));
+        }, AI_REQUEST_TIMEOUT_MS);
+
+        pendingAiRequests.set(requestId, {
+            resolve,
+            reject,
+            timeoutId
+        });
+
+        window.postMessage(
+            {
+                source: PAGE_SOURCE,
+                type: "AI_TICK",
+                requestId,
+                worldState,
+                pageUrl: window.location.href
+            },
+            "*"
+        );
+    });
+}
+
+function applyAiAction(actionData) {
+    if (!actionData || typeof actionData !== "object") {
+        console.warn("[AI Battler] Invalid action data:", actionData);
+        return;
+    }
+
+    console.log("[AI Battler] Received action:", actionData);
+
+    if (actionData.move) {
+        movePlayerDirection(actionData.move);
+    }
+
+    if (actionData.reset) {
+        getNetwork().playerHp(-1);
+    }
+}
+
+async function runAiLoop() {
+    if (aiLoopRunning) {
+        console.warn("[AI Battler] AI loop already running");
+        return;
+    }
+
+    aiLoopRunning = true;
+
+    console.log("[AI Battler] AI loop started");
+
+    while (aiLoopRunning) {
+        try {
+            const worldState = buildWorldState();
+            const actionData = await sendAiTick(worldState);
+
+            applyAiAction(actionData);
+        } catch (error) {
+            console.error("[AI Battler] Error:", error);
+        } finally {
+            await delay(AI_LOOP_DELAY_MS);
+        }
+    }
+}
+
+function startAiLoopOnce() {
+    if (aiLoopStarted) return;
+
+    aiLoopStarted = true;
+    runAiLoop();
+}
+
+function stopAiLoop() {
+    aiLoopRunning = false;
+    aiLoopStarted = false;
+    console.log("[AI Battler] AI loop stopped");
+}
+
+window.__aiBattler = {
+    start: startAiLoopOnce,
+    stop: stopAiLoop,
+    buildWorldState
 };
-
-
+//DO not change anything below
 
 const getWorld = () => {
     return window.gameRef.scene.keys.WORLD;
@@ -902,7 +1010,7 @@ const getPercent = (value, max) => {
             usePriorityAction(action, battler, group);
         }
         //New
-        setInterval(sendWorldStateToAI, 50000); // every 2000ms
+        startAiLoopOnce();
     };
 
     const battlerLoop = () => {
