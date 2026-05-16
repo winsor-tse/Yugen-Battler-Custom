@@ -166,7 +166,30 @@ function applyAiAction(actionData) {
     console.log("[AI Battler] Received action:", actionData);
 
     if (actionData.move) {
-        movePlayerDirection(actionData.move);
+        if (actionData.move == "up" || actionData.move == "down" || actionData.move == "left" || actionData.move == "right"){
+            movePlayerDirection(actionData.move);
+        }
+        else if(actionData.move == "direction:up" ||  actionData.move == "direction:down" || actionData.move == "direction:left" || actionData.move == "direction:right"){
+            switch(actionData.move){
+                case "direction:up":
+                    playerFaceDirection("up");
+                    break;
+                case "direction:down":
+                    playerFaceDirection("down");
+                    break;
+                case "direction:left":
+                    playerFaceDirection("left");
+                    break;
+                case "direction:right":
+                    playerFaceDirection("right");
+                    break;
+                default:
+                    console.log("Invalid Player Direction");
+            }
+        }
+        else if(actionData.move == "attack"){
+            getNetwork().playerAttack();
+        }
     }
 
     if (actionData.reset) {
