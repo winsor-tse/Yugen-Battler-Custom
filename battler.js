@@ -1,46 +1,5 @@
-if (!Date.now) {
-    Date.now = function() { return new Date().getTime(); }
-}
-
-//New
-const logWorldStateForAI = () => {
-    const player = getPlayer();
-    const rawEntities = getRegistry().entities;
-    const entities = Object.values(rawEntities);
-
-    const worldState = {
-        timestamp: Date.now(),
-        player: {
-            id: player.id,
-            name: player.name,
-            mapX: player.mapX,
-            mapY: player.mapY,
-            direction: player.direction,
-            hp: player.hp,
-            maxHp: player.maxHp,
-            mp: player.mp,
-            maxMp: player.maxMp,
-        },
-        entities: entities.map(entity => ({
-            id: entity.id,
-            name: entity.name,
-            type: entity.type,
-            isCurrentPlayer: entity.isCurrentPlayer,
-            mapX: entity.mapX,
-            mapY: entity.mapY,
-            hp: entity.hp,
-            maxHp: entity.maxHp,
-            mp: entity.mp,
-            maxMp: entity.maxMp,
-            distance: getDistance(entity.mapX, entity.mapY)
-        }))
-    };
-    //console.log("World State for AI:", JSON.stringify(worldState, null, 2));
-};
-
 // AI WebSocket bridge client.
 // This file runs in the PAGE context, so DO NOT use chrome.runtime here.
-
 const PAGE_SOURCE = "AI_BATTLER_PAGE";
 const EXTENSION_SOURCE = "AI_BATTLER_EXTENSION";
 
@@ -51,6 +10,10 @@ let aiLoopRunning = false;
 let aiLoopStarted = false;
 
 const pendingAiRequests = new Map();
+
+if (!Date.now) {
+    Date.now = function() { return new Date().getTime(); }
+}
 
 function createRequestId() {
     if (window.crypto && typeof window.crypto.randomUUID === "function") {
@@ -157,6 +120,113 @@ function sendAiTick(worldState) {
     });
 }
 
+function getValidSpellTargets() {
+    const rawEntities = getRegistry().entities || {};
+    const entities = Object.values(rawEntities);
+
+    return entities.filter(entity => {
+        if (!entity) return false;
+        if (entity.isCurrentPlayer) return false;
+        if (entity.mapX === undefined || entity.mapY === undefined) return false;
+        if (typeof entity.hp === "number" && entity.hp <= 0) return false;
+
+        return true;
+    });
+}
+
+function getEntityById(entityId) {
+    if (entityId === undefined || entityId === null || entityId === "") {
+        return null;
+    }
+
+    return getValidSpellTargets().find(entity => {
+        return String(entity.id) === String(entityId);
+    }) || null;
+}
+
+function getClosestSpellTarget() {
+    const targets = getValidSpellTargets();
+
+    if (targets.length === 0) {
+        return null;
+    }
+
+    const monsters = targets.filter(entity => entity.type === "monster");
+    const candidates = monsters.length > 0 ? monsters : targets;
+
+    candidates.sort((a, b) => {
+        const distanceA = getDistance(a.mapX, a.mapY);
+        const distanceB = getDistance(b.mapX, b.mapY);
+
+        return distanceA - distanceB;
+    });
+
+    return candidates[0];
+}
+
+function parseAiMoveCommand(moveCommand) {
+    if (!moveCommand || typeof moveCommand !== "string") {
+        return {
+            type: "none"
+        };
+    }
+
+    const parts = moveCommand.split(":");
+    const command = parts[0];
+
+    if (command === "up" || command === "down" || command === "left" || command === "right") {
+        return {
+            type: "move",
+            direction: command
+        };
+    }
+
+    if (command === "direction") {
+        const direction = parts[1];
+
+        if (direction === "up" || direction === "down" || direction === "left" || direction === "right") {
+            return {
+                type: "face",
+                direction
+            };
+        }
+
+        return {
+            type: "invalid",
+            reason: `Invalid direction command: ${moveCommand}`
+        };
+    }
+
+    if (command === "attack") {
+        return {
+            type: "attack"
+        };
+    }
+
+    if (command === "castSpell") {
+        const spellIndex = Number(parts[1]);
+        const targetId = parts.length >= 3 && parts[2] !== "" ? parts[2] : null;
+
+        if (!Number.isInteger(spellIndex)) {
+            return {
+                type: "invalid",
+                reason: `Invalid spell index in command: ${moveCommand}`
+            };
+        }
+
+        return {
+            type: "castSpell",
+            spellIndex,
+            targetId
+        };
+    }
+
+    return {
+        type: "invalid",
+        reason: `Unknown AI move command: ${moveCommand}`
+    };
+}
+
 function applyAiAction(actionData) {
     if (!actionData || typeof actionData !== "object") {
         console.warn("[AI Battler] Invalid action data:", actionData);
@@ -165,31 +235,48 @@ function applyAiAction(actionData) {
 
     console.log("[AI Battler] Received action:", actionData);
 
-    if (actionData.move) {
-        if (actionData.move == "up" || actionData.move == "down" || actionData.move == "left" || actionData.move == "right"){
-            movePlayerDirection(actionData.move);
+    const parsedCommand = parseAiMoveCommand(actionData.move);
+
+    if (parsedCommand.type === "move") {
+        movePlayerDirection(parsedCommand.direction);
+
+    } else if (parsedCommand.type === "face") {
+        playerFaceDirection(parsedCommand.direction);
+
+    } else if (parsedCommand.type === "attack") {
+        getNetwork().playerAttack();
+
+    } else if (parsedCommand.type === "castSpell") {
+        const target = parsedCommand.targetId
+            ? getEntityById(parsedCommand.targetId)
+            : getClosestSpellTarget();
+
+        if (!target) {
+            console.warn("[AI Battler] Cannot cast spell. No valid target found.", {
+                command: actionData.move,
+                parsedCommand
+            });
+            return;
         }
-        else if(actionData.move == "direction:up" ||  actionData.move == "direction:down" || actionData.move == "direction:left" || actionData.move == "direction:right"){
-            switch(actionData.move){
-                case "direction:up":
-                    playerFaceDirection("up");
-                    break;
-                case "direction:down":
-                    playerFaceDirection("down");
-                    break;
-                case "direction:left":
-                    playerFaceDirection("left");
-                    break;
-                case "direction:right":
-                    playerFaceDirection("right");
-                    break;
-                default:
-                    console.log("Invalid Player Direction");
-            }
+
+        const direction = getDirection(target.mapX, target.mapY);
+
+        if (direction) {
+            playerFaceDirection(direction);
         }
-        else if(actionData.move == "attack"){
-            getNetwork().playerAttack();
-        }
+
+        console.log("[AI Battler] Casting spell:", {
+            spellIndex: parsedCommand.spellIndex,
+            targetId: target.id,
+            targetName: target.name,
+            targetType: target.type,
+            distance: getDistance(target.mapX, target.mapY)
+        });
+
+        getNetwork().playerSpellCast(parsedCommand.spellIndex, target.id);
+
+    } else if (parsedCommand.type === "invalid") {
+        console.warn("[AI Battler]", parsedCommand.reason);
     }
 
     if (actionData.reset) {
@@ -590,16 +677,6 @@ const getPercent = (value, max) => {
     };
 
     const isAvoidTile = (tile, action) => {
-        /*
-        const effects = getRegistry().effects;
-        for (const index in effects) {
-            const effect = effects[index];
-            if (!effect.done) {
-                if (effect.mapX == tile.mapX && effect.mapY == tile.mapY) {
-                    return true;
-                }
-            }
-        }*/
         for (const avoidTile of avoidZoneMap.values()) {
             if (avoidTile.priority > action.priority) {
                 if (avoidTile.type == "avoid") {
@@ -714,16 +791,6 @@ const getPercent = (value, max) => {
             }
         }
         return bestTargetTile;
-    };
-
-    const getTarget = (battler, action) => {
-        const tileTargets = getFilteredTargetTiles(battler, action);
-        const tileTarget = getSelectedTargetTile(tileTargets, action);
-        if (tileTarget) {
-            const target = tileTarget.target;
-            return { id: target.id, targetTile: {mapX: target.mapX, mapY: target.mapY}, moveTile: tileTarget.tile }
-        }
-        return null;
     };
 
     const canCastSpell = (action, target) => {
