@@ -280,7 +280,10 @@ function applyAiAction(actionData) {
     }
 
     if (actionData.reset) {
-        getNetwork().playerHp(-1);
+        //getNetwork().playerHp(-1);
+        console.log("[AI Battler] Reset");
+        //self cast 9
+        getNetwork().playerSpellCast(9, getPlayer().id);
     }
 }
 
