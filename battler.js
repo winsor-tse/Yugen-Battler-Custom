@@ -1144,13 +1144,18 @@ const getPercent = (value, max) => {
     const messageHandler = async (event) => {
         if (!event.data.fromWebPage) {
             const { type, value } = event.data;
+            
+            // Get the player safely first
+            const player = getPlayer();
             if (type == "playerName") {
-                if (getPlayer().name) {
-                    window.postMessage({ type: type, text: getPlayer().name, fromWebPage: true }, '*');
+                // Check if player exists AND has a name
+                if (player && player.name) {
+                    window.postMessage({ type: type, text: player.name, fromWebPage: true }, '*');
                 }
-            } else if (type == "playerMoveSpeed") {
-                if (getPlayer().moveSpeed) {
-                    window.postMessage({ type: type, text: getPlayer().moveSpeed, fromWebPage: true }, '*');
+                } else if (type == "playerMoveSpeed") {
+                // Check if player exists AND has a move speed
+                if (player && player.moveSpeed) {
+                    window.postMessage({ type: type, text: player.moveSpeed, fromWebPage: true }, '*');
                 }
             } else if (type == "refreshBattlers") {
                 battlers = value;
