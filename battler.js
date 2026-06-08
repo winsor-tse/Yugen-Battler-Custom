@@ -331,20 +331,24 @@ window.__aiBattler = {
 };
 //DO not change anything below
 
-const getWorld = () => {
-    return window.gameRef.scene.keys.WORLD;
-};
-const getMap = () => {
-    return getWorld().map;
-};
-const getNetwork = () => {
-    return window.gameRef.scene.keys.NETWORK;
-};
-const getRegistry = () => {
-    return window.gameRef.registry;
-};
-const getPlayer = () => {
-    return getRegistry().player;
+const getWorld = () => { 
+  return window.gameRef?.scene?.keys?.WORLD; 
+}; 
+
+const getMap = () => { 
+  return getWorld()?.map; 
+}; 
+
+const getNetwork = () => { 
+  return window.gameRef?.scene?.keys?.NETWORK; 
+}; 
+
+const getRegistry = () => { 
+  return window.gameRef?.registry; 
+}; 
+
+const getPlayer = () => { 
+  return getRegistry()?.player; 
 };
 
 const movePlayerDelta = (deltaX, deltaY) => {
