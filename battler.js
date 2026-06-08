@@ -1,3 +1,4 @@
+console.log("[Yuugen Battler] battler.js injected into page", window.location.href);
 // AI WebSocket bridge client.
 // This file runs in the PAGE context, so DO NOT use chrome.runtime here.
 const PAGE_SOURCE = "AI_BATTLER_PAGE";

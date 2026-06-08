@@ -1,3 +1,5 @@
+console.log("[Yuugen Battler] content-bridge.js loaded", window.location.href);
+
 const PAGE_SOURCE = "AI_BATTLER_PAGE";
 const EXTENSION_SOURCE = "AI_BATTLER_EXTENSION";
 
