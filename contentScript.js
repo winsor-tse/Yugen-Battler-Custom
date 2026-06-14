@@ -1,3 +1,5 @@
+console.log("[Yuugen Battler] contentScript.js loaded", window.location.href);
+
 (() => {
     const defaultAttributes = { allow_move_actions: false, moveSpeed: 400, turn_delay: 1000, target_filters: [] };
     let playerName = "";
