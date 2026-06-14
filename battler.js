@@ -4,7 +4,7 @@ console.log("[Yuugen Battler] battler.js injected into page", window.location.hr
 const PAGE_SOURCE = "AI_BATTLER_PAGE";
 const EXTENSION_SOURCE = "AI_BATTLER_EXTENSION";
 
-const AI_LOOP_DELAY_MS = 500;
+const AI_LOOP_DELAY_MS = 200;
 const AI_REQUEST_TIMEOUT_MS = 5000;
 
 let aiLoopRunning = false;
