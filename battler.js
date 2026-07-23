@@ -31,7 +31,7 @@ function delay(ms) {
 function buildWorldState() {
     const player = getPlayer();
     // let mapID = getRegistry().curMapId;
-    console.log("map id is " & mapID)
+    // console.log("map id is " & mapID)
     const rawEntities = getRegistry().entities || {};
     const entities = Object.values(rawEntities);
 
