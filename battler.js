@@ -39,6 +39,7 @@ function buildWorldState() {
         player: {
             id: player.id,
             name: player.name,
+            mapID: player.mapID,
             mapX: player.mapX,
             mapY: player.mapY,
             direction: player.direction,
