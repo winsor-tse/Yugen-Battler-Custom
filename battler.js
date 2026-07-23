@@ -30,6 +30,7 @@ function delay(ms) {
 
 function buildWorldState() {
     const player = getPlayer();
+    const mapID = getRegistry.curMapId;
     const rawEntities = getRegistry().entities || {};
     const entities = Object.values(rawEntities);
 
@@ -38,9 +39,8 @@ function buildWorldState() {
 
         player: {
             id: player.id,
-            name: player.name,
-            name2: player.name,
-            mapID: player.mapID,
+            name: player.name,            
+            mapID: mapID,
             mapX: player.mapX,
             mapY: player.mapY,
             direction: player.direction,
