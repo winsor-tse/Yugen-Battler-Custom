@@ -13,7 +13,7 @@ let aiLoopStarted = false;
 const pendingAiRequests = new Map();
 
 if (!Date.now) {
-    Date.now = function() { return new Date().getTime(); }
+    Date.now = function () { return new Date().getTime(); }
 }
 
 function createRequestId() {
@@ -39,6 +39,7 @@ function buildWorldState() {
         player: {
             id: player.id,
             name: player.name,
+            name2: player.name,
             mapID: player.mapID,
             mapX: player.mapX,
             mapY: player.mapY,
@@ -333,24 +334,24 @@ window.__aiBattler = {
 };
 //DO not change anything below
 
-const getWorld = () => { 
-  return window.gameRef?.scene?.keys?.WORLD; 
-}; 
+const getWorld = () => {
+    return window.gameRef?.scene?.keys?.WORLD;
+};
 
-const getMap = () => { 
-  return getWorld()?.map; 
-}; 
+const getMap = () => {
+    return getWorld()?.map;
+};
 
-const getNetwork = () => { 
-  return window.gameRef?.scene?.keys?.NETWORK; 
-}; 
+const getNetwork = () => {
+    return window.gameRef?.scene?.keys?.NETWORK;
+};
 
-const getRegistry = () => { 
-  return window.gameRef?.registry; 
-}; 
+const getRegistry = () => {
+    return window.gameRef?.registry;
+};
 
-const getPlayer = () => { 
-  return getRegistry()?.player; 
+const getPlayer = () => {
+    return getRegistry()?.player;
 };
 
 const movePlayerDelta = (deltaX, deltaY) => {
@@ -419,7 +420,7 @@ const getDirection = (mapX, mapY) => {
         return getPlayer().direction;
     } else if (Math.abs(xOffset) > Math.abs(yOffset)) {
         if (xOffset < 0) {
-            return "left"; 
+            return "left";
         } else {
             return "right";
         }
@@ -439,7 +440,7 @@ const getTileDistance = (tile, tile2) => {
 const getDistance = (x, y) => {
     const mapX = getPlayer().mapX;
     const mapY = getPlayer().mapY;
-    return getTileDistance({mapX: x, mapY: y}, {mapX: mapX, mapY: mapY});
+    return getTileDistance({ mapX: x, mapY: y }, { mapX: mapX, mapY: mapY });
 };
 
 const getTileMagnitude = (tile, tile2) => {
@@ -449,7 +450,7 @@ const getTileMagnitude = (tile, tile2) => {
 const getMagnitude = (x, y) => {
     const mapX = getPlayer().mapX;
     const mapY = getPlayer().mapY;
-    return getTileMagnitude({mapX: x, mapY: y}, {mapX: mapX, mapY: mapY});
+    return getTileMagnitude({ mapX: x, mapY: y }, { mapX: mapX, mapY: mapY });
 };
 
 const getTilesAroundTarget = (mapX, mapY, distance) => {
@@ -458,13 +459,13 @@ const getTilesAroundTarget = (mapX, mapY, distance) => {
     let tiles = [];
     while (x >= y) {
         for (let i = 0; i < 4; ++i) {
-            if (x == 0 && i%2 == 0 || y == 0 && Math.floor(i/2) == 0) continue;
-            let xOffset = x * (i%2 == 0 ? 1 : -1);
-            let yOffset = y * (Math.floor(i/2) == 0 ? 1 : -1);
+            if (x == 0 && i % 2 == 0 || y == 0 && Math.floor(i / 2) == 0) continue;
+            let xOffset = x * (i % 2 == 0 ? 1 : -1);
+            let yOffset = y * (Math.floor(i / 2) == 0 ? 1 : -1);
 
-            tiles.push({mapX: (mapX+ xOffset), mapY: (mapY + yOffset)});
+            tiles.push({ mapX: (mapX + xOffset), mapY: (mapY + yOffset) });
             if (Math.abs(xOffset) != Math.abs(yOffset)) {
-                tiles.push({mapX: (mapX + yOffset), mapY: (mapY + xOffset)});
+                tiles.push({ mapX: (mapX + yOffset), mapY: (mapY + xOffset) });
             }
         }
 
@@ -501,7 +502,7 @@ const getPercent = (value, max) => {
     const getGroup = (groups, group_id) => {
         if (group_id) {
             for (const group of groups) {
-                if (group.id == group_id) {            
+                if (group.id == group_id) {
                     return group;
                 }
             }
@@ -551,7 +552,7 @@ const getPercent = (value, max) => {
     const satisfiesTargetTriggers = (target, action) => {
         if (action.hasOwnProperty("target_triggers")) {
             for (const trigger of action.target_triggers) {
-                const {type, amount} = trigger;
+                const { type, amount } = trigger;
 
                 if (type == "hp") {
                     if (getPercent(target.hp, target.maxHp) > amount) {
@@ -659,21 +660,21 @@ const getPercent = (value, max) => {
     const getAllTargetActionTiles = (target, action) => {
         let tiles = [];
         if (action.type == "attack") {
-            tiles.push({ mapX: target.mapX + 1, mapY: target.mapY});
-            tiles.push({ mapX: target.mapX - 1, mapY: target.mapY});
-            tiles.push({ mapX: target.mapX, mapY: target.mapY + 1});
-            tiles.push({ mapX: target.mapX, mapY: target.mapY - 1});
+            tiles.push({ mapX: target.mapX + 1, mapY: target.mapY });
+            tiles.push({ mapX: target.mapX - 1, mapY: target.mapY });
+            tiles.push({ mapX: target.mapX, mapY: target.mapY + 1 });
+            tiles.push({ mapX: target.mapX, mapY: target.mapY - 1 });
         } else if (action.type == "cast") {
             if (action.subtype == "line") {
                 for (let offset = 1; offset <= action.distance; ++offset) {
-                    tiles.push({ mapX: target.mapX + offset, mapY: target.mapY});
-                    tiles.push({ mapX: target.mapX - offset, mapY: target.mapY});
-                    tiles.push({ mapX: target.mapX, mapY: target.mapY + offset});
-                    tiles.push({ mapX: target.mapX, mapY: target.mapY - offset});
+                    tiles.push({ mapX: target.mapX + offset, mapY: target.mapY });
+                    tiles.push({ mapX: target.mapX - offset, mapY: target.mapY });
+                    tiles.push({ mapX: target.mapX, mapY: target.mapY + offset });
+                    tiles.push({ mapX: target.mapX, mapY: target.mapY - offset });
                 }
             }
         } else if (action.type == "pickup") {
-            tiles.push({ mapX: target.mapX, mapY: target.mapY});
+            tiles.push({ mapX: target.mapX, mapY: target.mapY });
         } else if (action.type == "avoid") {
             tiles = getTilesAroundTarget(target.mapX, target.mapY, action.distance + 1);
         } else if (action.type == "follow") {
@@ -731,9 +732,9 @@ const getPercent = (value, max) => {
                     }
                 }
                 if (bestTile) {
-                    targetTiles.push({target: target, tile: bestTile});
+                    targetTiles.push({ target: target, tile: bestTile });
                 } else {
-                    targetTiles.push({target: target, tile: playerTile});
+                    targetTiles.push({ target: target, tile: playerTile });
                 }
             }
         }
@@ -808,7 +809,7 @@ const getPercent = (value, max) => {
         }
         if (action.hasOwnProperty("cast_requirements")) {
             for (const requirements of action.cast_requirements) {
-                const {type, amount} = requirements;
+                const { type, amount } = requirements;
 
                 if (type == "hp") {
                     if (getPercent(getPlayer().hp, getPlayer().maxHp) < amount) {
@@ -860,7 +861,7 @@ const getPercent = (value, max) => {
     };
 
     const attemptFaceDirection = (direction) => {
-        if (direction) { 
+        if (direction) {
             if (direction != getPlayer().direction) {
                 if (lastTurn + attributes.turn_delay < Date.now()) {
                     playerFaceDirection(direction);
@@ -879,22 +880,22 @@ const getPercent = (value, max) => {
     const moveToTile = (targetTile, action) => {
         const adjTiles = (tile) => {
             let tiles = [];
-            tiles.push({mapX: tile.mapX + 1, mapY: tile.mapY});
-            tiles.push({mapX: tile.mapX - 1, mapY: tile.mapY});
-            tiles.push({mapX: tile.mapX, mapY: tile.mapY + 1});
-            tiles.push({mapX: tile.mapX, mapY: tile.mapY - 1});
+            tiles.push({ mapX: tile.mapX + 1, mapY: tile.mapY });
+            tiles.push({ mapX: tile.mapX - 1, mapY: tile.mapY });
+            tiles.push({ mapX: tile.mapX, mapY: tile.mapY + 1 });
+            tiles.push({ mapX: tile.mapX, mapY: tile.mapY - 1 });
             return tiles;
         }
         let tileData = new Map();
         let visited = new Set();
         let queue = [];
-        let start = { mapX: getPlayer().mapX, mapY: getPlayer().mapY};
+        let start = { mapX: getPlayer().mapX, mapY: getPlayer().mapY };
         let startKey = JSON.stringify(start);
         queue.push(start);
         visited.add(startKey);
-        tileData.set(startKey, {mapX: start.mapX, mapY: start.mapY, distance: 0, parentKey: null});
+        tileData.set(startKey, { mapX: start.mapX, mapY: start.mapY, distance: 0, parentKey: null });
         let totalTiles = 0;
-        while(queue.length > 0) {
+        while (queue.length > 0) {
             if (++totalTiles > 2500) {
                 console.log("moveToTile Error!");
                 return;
@@ -905,7 +906,7 @@ const getPercent = (value, max) => {
             for (let i = 0; i < queue.length; ++i) {
                 const avoidTile = isAvoidTile(queue[i], action);
                 const tileDistance = getTileDistance(queue[i], targetTile);
-                if (tileDistance + (avoidTile?3:0) < bestTileDistance + (avoidBestTile?3:0)) {
+                if (tileDistance + (avoidTile ? 3 : 0) < bestTileDistance + (avoidBestTile ? 3 : 0)) {
                     bestIndex = i;
                     bestTileDistance = tileDistance;
                     avoidBestTile = avoidTile;
@@ -916,11 +917,11 @@ const getPercent = (value, max) => {
             queue.splice(bestIndex, 1);
             if (current.mapX == targetTile.mapX && current.mapY == targetTile.mapY) {
                 let nextKey = curKey;
-                while(nextKey) {
+                while (nextKey) {
                     const data = tileData.get(nextKey);
                     nextKey = data.parentKey;
                     if (nextKey) {
-                        currentPath.push({mapX: data.mapX, mapY: data.mapY});
+                        currentPath.push({ mapX: data.mapX, mapY: data.mapY });
                     }
                 }
                 currentPath.reverse();
@@ -938,12 +939,12 @@ const getPercent = (value, max) => {
                     if (tileData.has(key)) {
                         const data = tileData.get(key);
                         if (data.distance > newDist) {
-                            tileData.set(key, {mapX: adjTile.mapX, mapY: adjTile.mapY, distance: newDist, parentKey: curKey});
-                            loadingTiles.push({mapX: adjTile.mapX, mapY: adjTile.mapY});
+                            tileData.set(key, { mapX: adjTile.mapX, mapY: adjTile.mapY, distance: newDist, parentKey: curKey });
+                            loadingTiles.push({ mapX: adjTile.mapX, mapY: adjTile.mapY });
                         }
                     } else {
-                        tileData.set(key, {mapX: adjTile.mapX, mapY: adjTile.mapY, distance: newDist, parentKey: curKey});
-                        loadingTiles.push({mapX: adjTile.mapX, mapY: adjTile.mapY});
+                        tileData.set(key, { mapX: adjTile.mapX, mapY: adjTile.mapY, distance: newDist, parentKey: curKey });
+                        loadingTiles.push({ mapX: adjTile.mapX, mapY: adjTile.mapY });
                     }
                 }
             }
@@ -965,21 +966,21 @@ const getPercent = (value, max) => {
             if (!attributes.allow_move_actions && ((lastMove + attributes.moveSpeed) > Date.now())) {
                 return false;
             }
-            if (action.type == "attack") {    
+            if (action.type == "attack") {
                 if (attemptFaceDirection(direction)) {
                     getNetwork().playerAttack();
                     actionCompleted = true;
                 }
             } else if (action.type == "cast") {
                 if (action.subtype == "target" || attemptFaceDirection(direction)) {
-                    getNetwork().playerSpellCast(action.index, id);                
+                    getNetwork().playerSpellCast(action.index, id);
                     actionCompleted = true;
                 }
             } else if (action.type == "pickup") {
-                getNetwork().playerItemPickUp();                
+                getNetwork().playerItemPickUp();
                 actionCompleted = true;
             } else if (action.type == "idle") {
-                if (attemptFaceDirection("down")) {                
+                if (attemptFaceDirection("down")) {
                     actionCompleted = true;
                 }
             } else {
@@ -1009,7 +1010,7 @@ const getPercent = (value, max) => {
     };
 
     const getAvoidTile = (x, y) => {
-        const key = x+"-"+y;
+        const key = x + "-" + y;
         if (avoidZoneMap.has(key)) {
             const existing = avoidZoneMap.get(key);
             return existing;
@@ -1018,8 +1019,8 @@ const getPercent = (value, max) => {
     };
 
     const setAvoidTile = (x, y, action) => {
-        const key = x+"-"+y;
-        avoidZoneMap.set(key, {mapX: x, mapY: y, type: action.type, priority: action.priority, distance: action.distance });
+        const key = x + "-" + y;
+        avoidZoneMap.set(key, { mapX: x, mapY: y, type: action.type, priority: action.priority, distance: action.distance });
     };
 
     const updateAvoidZoneMap = (battlers) => {
@@ -1096,7 +1097,7 @@ const getPercent = (value, max) => {
                             }
                         } else {
                             if (!useAction(action, battler, group)) {
-                                console.log("Action failed. ("+battler.id+"-"+action.id+")");
+                                console.log("Action failed. (" + battler.id + "-" + action.id + ")");
                                 console.log(action);
                             }
                         }
@@ -1118,7 +1119,7 @@ const getPercent = (value, max) => {
             //logWorldStateForAI(); 
         } catch (err) {
             console.log(err);
-        } 
+        }
         setTimeout(() => {
             battlerLoop();
         }, 100);
@@ -1136,7 +1137,7 @@ const getPercent = (value, max) => {
             }
         } catch (err) {
             console.log(err);
-        } 
+        }
         setTimeout(() => {
             pathingLoop();
         }, attributes.moveSpeed);
@@ -1146,7 +1147,7 @@ const getPercent = (value, max) => {
     const messageHandler = async (event) => {
         if (!event.data.fromWebPage) {
             const { type, value } = event.data;
-            
+
             // Get the player safely first
             const player = getPlayer();
             if (type == "playerName") {
@@ -1154,7 +1155,7 @@ const getPercent = (value, max) => {
                 if (player && player.name) {
                     window.postMessage({ type: type, text: player.name, fromWebPage: true }, '*');
                 }
-                } else if (type == "playerMoveSpeed") {
+            } else if (type == "playerMoveSpeed") {
                 // Check if player exists AND has a move speed
                 if (player && player.moveSpeed) {
                     window.postMessage({ type: type, text: player.moveSpeed, fromWebPage: true }, '*');
@@ -1167,7 +1168,7 @@ const getPercent = (value, max) => {
         }
     };
 
-    window.addEventListener('message', function(event) {
+    window.addEventListener('message', function (event) {
         messageHandler(event);
         return true;
     });
